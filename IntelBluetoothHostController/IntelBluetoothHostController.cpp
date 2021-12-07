@@ -26,6 +26,7 @@ init( OSDictionary * dictionary)
     if (!ret) {
         return false;
     }
+    radioPowerState = 0;
     return ret;
 }
 
@@ -36,7 +37,6 @@ free()
     super::free();
     releaseAll();
     SET_THIS_POINTER_VALUE(UInt64, 0x148, 0);
-    release();
 }
 
 bool IntelBluetoothHostController::
@@ -56,8 +56,6 @@ start( IOService * provider )
     }
     setProperty("InterfaceMatched", false);
     setProperty("ActiveBluetoothControllerVendor", "OpenIntelWireless");
-    retain();
-    registerService();
     SET_THIS_POINTER_VALUE(UInt16, 0xB0, 2);
     SET_THIS_POINTER_VALUE(char, 0x6BE, 1);
     fWorkLoop = IOWorkLoop::workLoop();
@@ -82,6 +80,8 @@ start( IOService * provider )
     fWorkLoop->addEventSource(fWatchdogEventSource);
     fWatchdogEventSource->setTimeoutMS(1000);
 //    fWatchdogEventSource->enable();
+    retain();
+    registerService();
     return true;
 }
 
@@ -98,13 +98,14 @@ stop( IOService * provider )
 {
     IOLog("%s\n", __PRETTY_FUNCTION__);
     super::stop(provider);
+    release();
 }
 
 bool IntelBluetoothHostController::
 NeedToTurnOnUSBDebug()
 {
     IOLog("%s\n", __PRETTY_FUNCTION__);
-    return DEBUG;
+    return false;
 }
 
 bool IntelBluetoothHostController::
@@ -184,6 +185,24 @@ systemWillShutdownWL(unsigned int code, void *buf)
 {
     IOReturn ret = super::systemWillShutdownWL(code, buf);
     IOLog("%s code=%d ret=%d\n", __PRETTY_FUNCTION__, code, ret);
+    return ret;
+}
+
+IOReturn IntelBluetoothHostController::
+SendHCIRequest(unsigned char *buf, unsigned long long len)
+{
+//    HciCommandHdr *hdr = (HciCommandHdr *)buf;
+//    kprintf("%s opcode=0x%04x len=%lld\n", __PRETTY_FUNCTION__, hdr->opcode, len);
+    bool ret = super::SendHCIRequest(buf, len);
+    return ret;
+}
+
+bool IntelBluetoothHostController::
+ReceiveInterruptData(void *buf, unsigned int len, bool unk)
+{
+//    HciResponse *response = (HciResponse *)buf;
+//    kprintf("%s len=%d opcode=0x%04x status=%d evt=%x plen=%d numCommands=%d\n", __PRETTY_FUNCTION__, len, response->opcode, response->status, response->evt, response->plen, response->numCommands);
+    bool ret = super::ReceiveInterruptData(buf, len, unk);
     return ret;
 }
 

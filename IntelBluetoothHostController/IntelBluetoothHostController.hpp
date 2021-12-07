@@ -12,6 +12,26 @@
 *(_type_ *)((char *)this + _offset_) = _value_
 //memset(((char *)this + _offset_), (_value_), sizeof(_type_))
 
+typedef struct __attribute__((packed))
+{
+    uint16_t opcode;    /* OCF & OGF */
+    uint8_t plen;
+    uint8_t pData[255];
+} HciCommandHdr;
+
+typedef struct __attribute__((packed))
+{
+    uint8_t evt;
+    uint8_t plen;
+} HciEventHdr;
+
+struct __attribute__((packed)) HciResponse: HciEventHdr
+{
+    uint8_t numCommands;
+    uint16_t opcode;
+    uint8_t status;
+};
+
 class IntelBluetoothHostController : public IOBluetoothHostControllerUSBTransport {
     OSDeclareDefaultStructors(IntelBluetoothHostController)
     
@@ -32,6 +52,8 @@ public:
     virtual bool PrepareControllerForPowerOn(void) override;
     virtual bool ConfigurePM(IOService *) override;
     virtual IOReturn systemWillShutdownWL(unsigned int,void *) override;
+    virtual IOReturn SendHCIRequest(unsigned char *,unsigned long long) override;
+    virtual bool ReceiveInterruptData(void *,unsigned int,bool) override;
     
 private:
     void releaseAll();
